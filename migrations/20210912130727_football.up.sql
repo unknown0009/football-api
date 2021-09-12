@@ -11,4 +11,3 @@ CREATE TABLE football (
         total INTEGER,
         url varchar(100) NOT NULL
 );
-COPY football FROM './football.csv' DELIMITER ',' CSV HEADER;
