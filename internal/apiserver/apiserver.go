@@ -60,14 +60,15 @@ func (s *APIServer) getMatchesByTeamName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		team := mux.Vars(r)["team"]
 		amount, _ := strconv.ParseInt(mux.Vars(r)["amount"], 10, 64)
-		rows, err := s.db.Queryx(`select * from football where hometeam=$1 or awayteam=$1`,
+
+		matches := []model.Match{}
+		err := s.db.Select(&matches, `select * from football where hometeam=$1 or  awayteam=$1`,
 			team)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		matches := collectMatchesFromRows(rows, amount)
-		json.NewEncoder(w).Encode(matches)
+		json.NewEncoder(w).Encode(matches[:amount])
 	}
 }
 
@@ -76,33 +77,14 @@ func (s *APIServer) getVersusMatches() http.HandlerFunc {
 		team_1 := mux.Vars(r)["team_1"]
 		team_2 := mux.Vars(r)["team_2"]
 
-		rows, err := s.db.Queryx(`select * from football where hometeam in ($1, $2) 
+		matches := []model.Match{}
+		err := s.db.Select(&matches, `select * from football where hometeam in ($1, $2) 
 			and awayteam in ($1, $2)`,
 			team_1, team_2)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		matches := collectMatchesFromRows(rows, 1000)
 		json.NewEncoder(w).Encode(matches)
 	}
-}
-
-func collectMatchesFromRows(rows *sqlx.Rows, amount int64) []model.Match {
-	matches := []model.Match{}
-	var count int64 = 0
-	for rows.Next() {
-		if count == amount {
-			break
-		}
-		count++
-		match := model.Match{}
-		err := rows.StructScan(&match)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		matches = append(matches, match)
-	}
-	return matches
 }
