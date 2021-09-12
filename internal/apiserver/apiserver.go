@@ -1,7 +1,6 @@
 package apiserver
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,13 +9,14 @@ import (
 
 	"github.com/fidesy/football-api/internal/model"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
 type APIServer struct {
 	bind_addr string
 	router    *mux.Router
-	db        *sql.DB
+	db        *sqlx.DB
 }
 
 func New() *APIServer {
@@ -37,7 +37,7 @@ func (s *APIServer) Start(config *Config) error {
 }
 
 func (s *APIServer) configureStore(config *Config) error {
-	db, err := sql.Open("postgres", config.DatabaseURL)
+	db, err := sqlx.Open("postgres", config.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func (s *APIServer) getMatchesByTeamName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		team := mux.Vars(r)["team"]
 		amount, _ := strconv.ParseInt(mux.Vars(r)["amount"], 10, 64)
-		rows, err := s.db.Query(`select * from football where home_team=$1 or away_team=$1`,
+		rows, err := s.db.Queryx(`select * from football where hometeam=$1 or awayteam=$1`,
 			team)
 		if err != nil {
 			fmt.Println(err)
@@ -76,8 +76,8 @@ func (s *APIServer) getVersusMatches() http.HandlerFunc {
 		team_1 := mux.Vars(r)["team_1"]
 		team_2 := mux.Vars(r)["team_2"]
 
-		rows, err := s.db.Query(`select * from football where home_team in ($1, $2) 
-			and away_team in ($1, $2)`,
+		rows, err := s.db.Queryx(`select * from football where hometeam in ($1, $2) 
+			and awayteam in ($1, $2)`,
 			team_1, team_2)
 		if err != nil {
 			fmt.Println(err)
@@ -88,7 +88,7 @@ func (s *APIServer) getVersusMatches() http.HandlerFunc {
 	}
 }
 
-func collectMatchesFromRows(rows *sql.Rows, amount int64) []model.Match {
+func collectMatchesFromRows(rows *sqlx.Rows, amount int64) []model.Match {
 	matches := []model.Match{}
 	var count int64 = 0
 	for rows.Next() {
@@ -97,9 +97,7 @@ func collectMatchesFromRows(rows *sql.Rows, amount int64) []model.Match {
 		}
 		count++
 		match := model.Match{}
-		err := rows.Scan(&match.Id, &match.Date, &match.Tournament, &match.HomeTeam,
-			&match.HomeGoals, &match.AwayGoals, &match.AwayTeam, &match.HalfHomeGoals,
-			&match.HalfAwayGoals, &match.Total, &match.Url)
+		err := rows.StructScan(&match)
 		if err != nil {
 			fmt.Println(err)
 			continue
