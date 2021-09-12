@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  db:
+    container_name: pg_container
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: YOUR_USER_NAME
+      POSTGRES_PASSWORD: YOUR_USER_PASSWORD
+      POSTGRES_DB: YOUR_DATABASE_NAME
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    volumes:
+      - .:/app
+    environment:
+      - VIRTUAL_HOST=YOUR_HOST
+    depends_on:
+      - db
+
+
+volumes:
+  pg_data:
