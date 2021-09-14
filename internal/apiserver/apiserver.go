@@ -2,8 +2,6 @@ package apiserver
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -30,8 +28,9 @@ func (s *APIServer) Start(config *Config) error {
 	s.configureRouter()
 
 	if err := s.configureStore(config); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	defer s.db.Close()
 
 	return http.ListenAndServe(s.bind_addr, s.router)
 }
@@ -39,11 +38,11 @@ func (s *APIServer) Start(config *Config) error {
 func (s *APIServer) configureStore(config *Config) error {
 	db, err := sqlx.Open("postgres", config.DatabaseURL)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	s.db = db
@@ -65,7 +64,8 @@ func (s *APIServer) getMatchesByTeamName() http.HandlerFunc {
 		err := s.db.Select(&matches, `select * from football where hometeam=$1 or  awayteam=$1`,
 			team)
 		if err != nil {
-			fmt.Println(err)
+			w.WriteHeader(404)
+			return
 		}
 
 		json.NewEncoder(w).Encode(matches[:amount])
@@ -82,7 +82,8 @@ func (s *APIServer) getVersusMatches() http.HandlerFunc {
 			and awayteam in ($1, $2)`,
 			team_1, team_2)
 		if err != nil {
-			fmt.Println(err)
+			w.WriteHeader(404)
+			return
 		}
 
 		json.NewEncoder(w).Encode(matches)
