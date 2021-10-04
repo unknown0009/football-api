@@ -57,6 +57,8 @@ func (s *APIServer) configureRouter() {
 
 func (s *APIServer) getMatchesByTeamName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
 		team := mux.Vars(r)["team"]
 		amount, _ := strconv.ParseInt(mux.Vars(r)["amount"], 10, 64)
 
@@ -67,13 +69,19 @@ func (s *APIServer) getMatchesByTeamName() http.HandlerFunc {
 			w.WriteHeader(404)
 			return
 		}
+		if len(matches) < int(amount) {
+			json.NewEncoder(w).Encode(matches)
+		} else {
+			json.NewEncoder(w).Encode(matches[:amount])
+		}
 
-		json.NewEncoder(w).Encode(matches[:amount])
 	}
 }
 
 func (s *APIServer) getVersusMatches() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		
 		team_1 := mux.Vars(r)["team_1"]
 		team_2 := mux.Vars(r)["team_2"]
 
