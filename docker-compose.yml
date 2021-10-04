@@ -21,9 +21,9 @@ services:
       - .:/app
     environment:
       - VIRTUAL_HOST=92.255.77.155
-  #  depends_on:
-  #    - db
+   depends_on:
+     - db
 
 
-#volumes:
-#  pg_data:
+volumes:
+ pg_data:
