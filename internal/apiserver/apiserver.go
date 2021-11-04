@@ -57,7 +57,7 @@ func (s *APIServer) configureRouter() {
 
 func (s *APIServer) getMatchesByTeamName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json")
 
 		team := mux.Vars(r)["team"]
 		amount, _ := strconv.ParseInt(mux.Vars(r)["amount"], 10, 64)
@@ -80,7 +80,7 @@ func (s *APIServer) getMatchesByTeamName() http.HandlerFunc {
 
 func (s *APIServer) getVersusMatches() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json")
 		
 		team_1 := mux.Vars(r)["team_1"]
 		team_2 := mux.Vars(r)["team_2"]
