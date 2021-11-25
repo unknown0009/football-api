@@ -25,13 +25,14 @@ Database contains over 80k matches. Matches of teams from the 5 leagues:
 ## Usage
 ```golang
 func main() {
-    req, err := http.Get(
+    resp, err := http.Get(
         "http://92.255.77.155/api/Chelsea/10")
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,3 +56,4 @@ Examples of requests:
 
 ## Adding hostname
 I haven't come up with a hostname yet, but even this IP address looks pretty good.
+
